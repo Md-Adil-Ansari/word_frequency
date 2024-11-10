@@ -1,24 +1,21 @@
 const cheerio = require("cheerio");
 const Heap = require("heap");
 const axios = require("axios");
+const fs = require("fs");
 
 function getTopNWords(html, topN) {
   // Load HTML into cheerio for parsing
-  
-  const $ = cheerio.load(html);
-  $(
-    "script, style"
-    //TODO: THINK OF WHICH ALL TAGS TO REMOVE WHICH IS NOT VISIBLE ON THE WEBSITE
-  ).remove();
-  
-  const cleanText = $("body").text();
 
-  
+  const $ = cheerio.load(html);
+  $("script, style, link, noscript, meta").remove();
+
+  const cleanText = $.text();
+
   const words = cleanText
-  .replace(/[\W_]+/g, " ") // Remove punctuation and special characters
-  .toLowerCase() // Convert to lowercase
-  .split(/\s+/) // Split into words
-  .filter((word) => word.length > 0); // Remove empty strings
+    .replace(/[\W_]+/g, " ") // Remove punctuation and special characters
+    .toLowerCase() // Convert to lowercase
+    .split(/\s+/) // Split into words
+    .filter((word) => word.length > 0); // Remove empty strings
 
   // Count the frequency of each word using an unordered map
   const frequencyMap = {};
@@ -56,7 +53,7 @@ function getTopNWords(html, topN) {
 
 const higherFrequencyCalculator = async (req, res) => {
   const { url, n } = req.body;
-  const topN =( n === undefined || n==="" )? 10 : n;
+  const topN = n === undefined || n === "" ? 10 : n;
 
   try {
     // Fetch the webpage content with timeout and limited redirects
@@ -70,7 +67,7 @@ const higherFrequencyCalculator = async (req, res) => {
     const html = response.data;
     // Process the HTML to get top N words
     const topWords = getTopNWords(html, topN);
-    return res.json({topWords }); // Respond with the top words
+    return res.json({ topWords }); // Respond with the top words
   } catch (error) {
     return res
       .status(500)
